@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import sys
 import os
 from collections import OrderedDict
 import click
@@ -16,8 +17,12 @@ desc = '''# Starred
 
 @click.command()
 @click.option('--username', default=lambda: os.environ.get('USER', ''), help='GitHub username')
+@click.option('--password', default='', help='GitHub password')
+@click.option('--token', default='', help='GitHub token')
 @click.option('--sort',  is_flag=True, help='sort by language')
-def starred(username, sort):
+@click.option('--file', default='README.md', help='the file name')
+@click.option('--repository', default='github-starred', help='repository name')
+def starred(username, password, token, sort, file, repository):
     """GitHub starred
 
     make your own awesome lists page by GitHub star!
@@ -26,7 +31,9 @@ def starred(username, sort):
         starred --username maguowei --sort > README.md
 
     """
-    gh = GitHub()
+
+    sys.stdout = open(file, 'w')
+    gh = GitHub(username, password, token)
     stars = gh.starred_by(username)
     click.echo(desc)
     repo_dict = {}
@@ -54,6 +61,11 @@ def starred(username, sort):
             data = u'* [{}]({}) - {}'.format(*repo)
             click.echo(data)
         click.echo('')
+
+    if repository:
+        rep = gh.create_repository(repository)
+        with open(file) as f:
+            rep.create_file('README.md', 'create GitHub starred page', f.read())
 
 
 if __name__ == '__main__':
